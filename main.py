@@ -19,6 +19,7 @@ class GameSprite(sprite.Sprite):
         super().__init__()
         self.image = transform.scale(image.load(pimage), (size[0], size[1]))
         #https://pg1.readthedocs.io/en/latest/ref/sprite.html#pygame.sprite.collide_mask
+        self.mask = mask.from_surface(self.image)
         self.speed = speed
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -56,6 +57,9 @@ class Enemy(GameSprite):
         if self.move == 'down':
             self.rect.y += self.speed
 
+class Let(GameSprite):
+    def __init__(self, pimage, x, y, size, speed):
+            super().__init__(pimage, x, y, size, speed)
 
 class Ball(GameSprite):
     def __init__(self, pimage, x, y, size, speed):
@@ -69,7 +73,7 @@ class Ball(GameSprite):
             self.speed_y = random.randint(-5, -1)
         elif self.rect.top <= 0:
             self.speed_y = random.randint(1, 5)
-        if sprite.collide_mask(self, player) or sprite.collide_mask(self, enemy):
+        if sprite.collide_rect(ball, player) or sprite.collide_rect(ball, enemy) or sprite.spritecollideany(ball, lets_group):
             self.speed_x *= -1
         if self.rect.left <= 0:
             point['player'] += 1
@@ -82,16 +86,29 @@ class Ball(GameSprite):
 
 player = Player('platform.png', 3.5*(width*0.25), height//4, (43, 206), 3)
 enemy = Enemy('platform.png', 0.3*(width*0.25), height//4, (43, 206), 3)
+
+let_y = False
+while not let_y:
+    let_y = random.randint(50, 550)
+    if let_y <= 0.5*width-50 or let_y >= 0.5*width+50:
+        let_y = False
+    else:
+        let_y = True
+
+let = Let('let.png', random.randint(200, 500), random.randint(50, 550), (8, 250), 0)
 ball = Ball('ball.png', 0.5*width, 0.5*height, (32, 32), 5)
+lets_group = sprite.Group()
+lets_group.add(let)
 
 finish = False
 render_point = False
 
 while True:
     window.fill(white)
-    ball.reset(); ball.update()
     player.reset(); player.update()
     enemy.reset(); enemy.update()
+    ball.reset(); ball.update()
+    let.reset(); let.update()
 
     keys = key.get_pressed()
     for e in event.get():
